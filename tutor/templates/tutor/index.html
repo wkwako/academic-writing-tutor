@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head><title>Academic Writing Tutor</title></head>
+<body>
+    <h1>Academic Writing Tutor</h1>
+    <form method="post">
+        {% csrf_token %}
+        <textarea name="passage" rows="10" cols="60" placeholder="Paste your passage here...">{{ submitted_text }}</textarea>
+        <br>
+        <button type="submit">Analyze</button>
+    </form>
+
+    {% if submitted_text %}
+        <h2>You submitted:</h2>
+        <p>{{ submitted_text }}</p>
+    {% endif %}
+</body>
+</html>
