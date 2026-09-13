@@ -5,14 +5,17 @@
     <h1>Academic Writing Tutor</h1>
     <form method="post">
         {% csrf_token %}
-        <textarea name="passage" rows="10" cols="60" placeholder="Paste your passage here...">{{ submitted_text }}</textarea>
-        <br>
+        <textarea name="passage" rows="10" cols="60" placeholder="Paste your passage here...">{{ submitted_text }}</textarea> <br>
+        <textarea name="topic" rows="4" cols="60" placeholder="Enter the topic here...">{{ topic_text }}</textarea> <br>
+        <textarea name="purpose" rows="2" cols="60" placeholder="Enter the purpose here...">{{ purpose_text }}</textarea> <br>
         <button type="submit">Analyze</button>
     </form>
 
     {% if submitted_text %}
         <h2>You submitted:</h2>
         <p>{{ submitted_text }}</p>
+        <h2>Feedback:</h2>
+        <p>{{ feedback }}</p>
     {% endif %}
 </body>
 </html>

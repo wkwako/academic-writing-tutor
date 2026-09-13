@@ -3,19 +3,19 @@ from langgraph.graph import StateGraph, START, END
 from operator import add
 from dotenv import load_dotenv
 from langchain_anthropic import ChatAnthropic
-import static_variables
+from . import static_variables
 load_dotenv()
 
 class TutorState(TypedDict):
     passage: str #what the user has written
-    prompt: str #the prompt we send to the llm
     history: str #previous passages and their feedback
-    critiques: Annotated[list, add]
+    critiques: Annotated[list, add] #critiques from each analyzer
     topic: str #what it's about
     purpose: str #what it's for
+    feedback: str #what the student sees (built by synthesizer)
 
 class TutorGraph:
-    def __init__(self, max_tokens=1000):
+    def __init__(self, max_tokens=20000):
         self.cheap_model = ChatAnthropic(model="claude-haiku-4-5-20251001", max_tokens=max_tokens)
         self.strong_model = ChatAnthropic(model="claude-sonnet-5", max_tokens=max_tokens)
         self.graph = self._build()
@@ -179,18 +179,17 @@ class TutorGraph:
 
         return builder.compile()
 
-    def run(self, passage, prompt, history=""):
+    def run(self, passage, topic, purpose, history=""):
         initial_state = {
-            "passage": passage, "prompt": prompt, "history": history, "critiques": [], "feedback": ""
+            "passage": passage, "topic": topic, "purpose": purpose,"history": history, "critiques": [], "feedback": ""
         }
 
         return self.graph.invoke(initial_state)
 
 if __name__ == "__main__":
     tutor = TutorGraph()
-    state: TutorState = {
-        "passage": "She doesn't know where they're going to put its bags.",
-        "prompt": "", "history": "Last passage: She dont know where there going to put they're bags.", "critiques": [],
-        "topic": "", "purpose": "",
-    }
-    print(tutor.run(state))
+    passage = "The French Revolution were caused by many things. There was economic problems, social inequality, and enlightenment ideas that spreaded through france. The common people, who was called the Third Estate, they paid most of the taxes while the nobility payed almost nothing. This made people very angry and upset and mad. Bread prices was also very high, and many people could not afford to eat, which is similar to how modern inflation affects grocery costs today. The king, Louis XVI, he was not a strong leader and he failed to fix the countrys financial crisis. Enlightenment thinkers like Rousseau and Voltaire, they wrote about liberty and equality. These ideas made people question the monarchy. In conclusion there was many causes of the french revolution and it changed history forever."
+    topic = "Discuss the causes of the French Revolution"
+    purpose = "a first-year undergraduate history essay"
+
+    print(tutor.run(passage, topic, purpose))
