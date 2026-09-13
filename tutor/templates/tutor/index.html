@@ -1,21 +1,61 @@
 <!DOCTYPE html>
-<html>
-<head><title>Academic Writing Tutor</title></head>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Academic Writing Tutor</title>
+    <style>
+        :root { --ink: #1a1a2e; --muted: #6b6b7b; --line: #d8d8e0; --bg: #fbfbfd; --accent: #3a5a8c; }
+        * { box-sizing: border-box; }
+        body {
+            font-family: Georgia, 'Times New Roman', serif;
+            color: var(--ink); background: var(--bg);
+            line-height: 1.6; margin: 0;
+            padding: 3rem 1.5rem;
+        }
+        .wrap { max-width: 680px; margin: 0 auto; }
+        h1 { font-size: 2rem; font-weight: 600; margin: 0 0 2rem; letter-spacing: -0.01em; }
+        label { display: block; font-family: -apple-system, system-ui, sans-serif;
+                font-size: 0.85rem; color: var(--muted); margin: 1.2rem 0 0.4rem; }
+        textarea {
+            width: 100%; font-family: inherit; font-size: 1rem; line-height: 1.5;
+            padding: 0.75rem; border: 1px solid var(--line); border-radius: 6px;
+            background: #fff; resize: vertical;
+        }
+        textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: var(--accent); }
+        button {
+            font-family: -apple-system, system-ui, sans-serif; font-size: 0.95rem;
+            margin-top: 1.2rem; padding: 0.6rem 1.4rem; border: none; border-radius: 6px;
+            background: var(--accent); color: #fff; cursor: pointer;
+        }
+        .feedback { margin-top: 2.5rem; padding-top: 2rem; border-top: 1px solid var(--line); }
+        .feedback h2 { font-size: 1.1rem; font-weight: 600; margin: 0 0 1rem; }
+        .feedback p { margin: 0 0 1rem; }
+    </style>
+</head>
 <body>
-    <h1>Academic Writing Tutor</h1>
-    <form method="post">
-        {% csrf_token %}
-        <textarea name="passage" rows="10" cols="60" placeholder="Paste your passage here...">{{ submitted_text }}</textarea> <br>
-        <textarea name="topic" rows="4" cols="60" placeholder="Enter the topic here...">{{ topic_text }}</textarea> <br>
-        <textarea name="purpose" rows="2" cols="60" placeholder="Enter the purpose here...">{{ purpose_text }}</textarea> <br>
-        <button type="submit">Analyze</button>
-    </form>
+    <div class="wrap">
+        <h1>Academic Writing Tutor</h1>
+        <form method="post">
+            {% csrf_token %}
+            <label for="passage">Your writing</label>
+            <textarea id="passage" name="passage" rows="12" placeholder="Paste your passage here...">{{ submitted_text }}</textarea>
 
-    {% if submitted_text %}
-        <h2>You submitted:</h2>
-        <p>{{ submitted_text }}</p>
-        <h2>Feedback:</h2>
-        <p>{{ feedback }}</p>
-    {% endif %}
+            <label for="topic">Topic <span style="color:var(--muted)">(optional)</span></label>
+            <textarea id="topic" name="topic" rows="2" placeholder="What is the writing about?">{{ topic_text }}</textarea>
+
+            <label for="purpose">Purpose <span style="color:var(--muted)">(optional)</span></label>
+            <textarea id="purpose" name="purpose" rows="2" placeholder="What is it for? e.g. a cover letter, a history essay">{{ purpose_text }}</textarea>
+
+            <button type="submit">Analyze</button>
+        </form>
+
+        {% if feedback %}
+        <div class="feedback">
+            <h2>Feedback</h2>
+            {{ feedback|linebreaks }}
+        </div>
+        {% endif %}
+    </div>
 </body>
 </html>
