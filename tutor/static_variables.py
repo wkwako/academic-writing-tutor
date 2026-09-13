@@ -11,7 +11,8 @@ def vocab_prompt():
             Assess word choice, precision, register, and variety.
             If a previous draft is provided, comment on whether the
             vocabulary has improved relative to it. Give specific,
-            constructive feedback; do not rewrite the passage."""
+            constructive feedback; do not rewrite the passage. Recommend
+            specific words the user could use instead and why."""
 
 def topic_prompt(topic):
     return f"""You are a topic analyzer for academic
@@ -95,9 +96,10 @@ def synthesis_prompt(purpose):
             resolve the tension rather than passing it to the student: weigh the conflict
             against the passage's stated purpose ({purpose}) and give a single clear
             recommendation. Do not simply list what each analyzer said.
-            Write your feedback as one flowing paragraph of clear, encouraging
-            prose addressed directly to the student. Do not organize it by analyzer,
-            and do not use headers or bullet points. Order what you say from most to
+            Write your feedback as one or more flowing paragrapsh of clear, encouraging
+            prose addressed directly to the student. Don't necessarily organize it by analyzer,
+            but do use multiple paragraphs based on logical separations.
+            Do not use headers or bullet points. Order what you say from most to
             least important, so the student knows where to focus first. Include as much
             or as little as the passage genuinely warrants: if it needs substantial work,
             cover what matters; if it is already strong, say so honestly and briefly rather
