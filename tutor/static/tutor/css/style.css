@@ -1,0 +1,102 @@
+:root {
+    --ink: #1a1a2e; --muted: #6b6b7b; --line: #d8d8e0; --bg: #fbfbfd; --accent: #3a5a8c;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Georgia, 'Times New Roman', serif;
+    color: var(--ink); background: var(--bg);
+    line-height: 1.6; margin: 0;
+    padding: 3rem 1.5rem;
+}
+.wrap {
+    max-width: 680px; margin: 0 auto;
+}
+
+h1 {
+    font-size: 2rem; font-weight: 600; margin: 0 0 2rem; letter-spacing: -0.01em;
+}
+
+label {
+    display: block; font-family: -apple-system, system-ui, sans-serif;
+        font-size: 0.85rem; color: var(--muted); margin: 1.2rem 0 0.4rem;
+    }
+.optional {
+    color: var(--muted);
+}
+
+textarea {
+    width: 100%; font-family: inherit; font-size: 1rem; line-height: 1.5;
+    padding: 0.75rem; border: 1px solid var(--line); border-radius: 6px;
+    background: #fff; resize: vertical;
+}
+textarea:focus {
+    outline: 2px solid var(--accent); outline-offset: 1px; border-color: var(--accent);
+}
+button {
+    font-family: -apple-system, system-ui, sans-serif; font-size: 0.95rem;
+    margin-top: 1.2rem; padding: 0.6rem 1.4rem; border: none; border-radius: 6px;
+    background: var(--accent); color: #fff; cursor: pointer;
+}
+
+button:disabled {
+    background: var(--muted); cursor: default;
+}
+.feedback {
+    margin-top: 2.5rem; padding-top: 2rem; border-top: 1px solid var(--line);
+}
+.feedback h2 {
+    font-size: 1.1rem; font-weight: 600; margin: 0 0 1rem;
+}
+.feedback p {
+    margin: 0 0 1rem;
+}
+
+.analyzers {
+    margin: 1.6rem 0 0;
+    padding: 1rem 1.2rem;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: #fff;
+}
+.analyzers legend {
+    font-family: -apple-system, system-ui, sans-serif;
+    font-size: 0.85rem; color: var(--muted); padding: 0 0.4rem;
+}
+label.check {
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    margin: 0.3rem 1.2rem 0.3rem 0; color: var(--ink);
+}
+label.check input { accent-color: var(--accent); }
+
+/* loading skeleton */
+.skeleton {
+    margin-top: 2.5rem; padding-top: 2rem; border-top: 1px solid var(--line);
+}
+.skeleton h2 {
+    font-size: 1.1rem; font-weight: 600; margin: 0 0 1rem; color: var(--muted);
+}
+.skeleton-line {
+    height: 0.9rem;
+    margin: 0.75rem 0;
+    border-radius: 3px;
+    background: linear-gradient(90deg, #e8e4dc 25%, #f2efe9 50%, #e8e4dc 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s ease-in-out infinite;
+}
+.skeleton-line.short {
+    width: 62%;
+}
+.skeleton-line.gap {
+    margin-bottom: 1.75rem;
+}
+@keyframes shimmer {
+    from { background-position: 200% 0; }
+    to   { background-position: -200% 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .skeleton-line { animation: none; }
+}

@@ -18,7 +18,15 @@ class TutorGraph:
     def __init__(self, max_tokens=20000):
         self.cheap_model = ChatAnthropic(model="claude-haiku-4-5-20251001", max_tokens=max_tokens)
         self.strong_model = ChatAnthropic(model="claude-sonnet-5", max_tokens=max_tokens)
-        self.graph = self._build()
+
+        self.analyzers = {
+            "grammar": self.grammar_node,
+            "vocabulary": self.vocab_node,
+            "topic": self.topic_node,
+            "structure": self.structure_node,
+            "para_anatomy": self.para_anatomy_node,
+            "purpose": self.purpose_node,
+        }
 
     def grammar_node(self, state):
         passage = state["passage"]
@@ -145,46 +153,35 @@ class TutorGraph:
 
         return {"feedback": response.content}
 
-    def _build(self):
-        #create the builder
+    def _build(self, enabled):
         builder = StateGraph(TutorState)
-
-        #register nodes
-        builder.add_node("grammar", self.grammar_node)
-        builder.add_node("vocabulary", self.vocab_node)
-        builder.add_node("topic", self.topic_node)
-        builder.add_node("structure", self.structure_node)
-        builder.add_node("para_anatomy", self.para_anatomy_node)
-        builder.add_node("purpose", self.purpose_node)
         builder.add_node("synthesis", self.synthesis_node)
 
-        #fan-out: connect START to each analyzer
-        builder.add_edge(START, "grammar")
-        builder.add_edge(START, "vocabulary")
-        builder.add_edge(START, "topic")
-        builder.add_edge(START, "structure")
-        builder.add_edge(START, "para_anatomy")
-        builder.add_edge(START, "purpose")
+        for name in enabled:
+            builder.add_node(name, self.analyzers[name])
+            builder.add_edge(START, name)
+            builder.add_edge(name, "synthesis")
 
-        #fan-in: connect each analyzer to synthesis
-        builder.add_edge("grammar", "synthesis")
-        builder.add_edge("vocabulary", "synthesis")
-        builder.add_edge("topic", "synthesis")
-        builder.add_edge("structure", "synthesis")
-        builder.add_edge("para_anatomy", "synthesis")
-        builder.add_edge("purpose", "synthesis")
-
-        #connect synthesis to END
         builder.add_edge("synthesis", END)
-
         return builder.compile()
 
-    def run(self, passage, topic, purpose, history=""):
+    def run(self, passage, topic, purpose, history="", enabled=None):
+        if enabled is None:
+            enabled = list(self.analyzers)
+
+        enabled = [name for name in enabled if name in self.analyzers]
+
+        if not enabled:
+            return {"feedback": "Please select at least one type of feedback."}
+
+        graph = self._build(enabled)
+
         initial_state = {
-            "passage": passage, "topic": topic, "purpose": purpose,"history": history, "critiques": [], "feedback": ""
+            "passage": passage, "topic": topic, "purpose": purpose,
+            "history": history, "critiques": [], "feedback": "",
         }
 
-        return self.graph.invoke(initial_state)
+        return graph.invoke(initial_state)
 
 if __name__ == "__main__":
     tutor = TutorGraph()
