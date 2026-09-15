@@ -11,3 +11,6 @@ wheels/
 
 #secret key
 .env
+
+corpus/
+chroma_db/
