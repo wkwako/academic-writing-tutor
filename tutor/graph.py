@@ -1,5 +1,7 @@
 from typing import TypedDict, Annotated
 from langgraph.graph import StateGraph, START, END
+from langchain_chroma import Chroma
+from langchain_huggingface import HuggingFaceEmbeddings
 from operator import add
 from dotenv import load_dotenv
 from langchain_anthropic import ChatAnthropic
@@ -13,11 +15,15 @@ class TutorState(TypedDict):
     topic: str #what it's about
     purpose: str #what it's for
     feedback: str #what the student sees (built by synthesizer)
+    criteria: list
 
 class TutorGraph:
     def __init__(self, max_tokens=20000):
         self.cheap_model = ChatAnthropic(model="claude-haiku-4-5-20251001", max_tokens=max_tokens)
         self.strong_model = ChatAnthropic(model="claude-sonnet-5", max_tokens=max_tokens)
+
+        embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+        self.store = Chroma(collection_name="criteria", persist_directory="chroma_db", embedding_function=embeddings)
 
         self.analyzers = {
             "grammar": self.grammar_node,
@@ -27,6 +33,23 @@ class TutorGraph:
             "para_anatomy": self.para_anatomy_node,
             "purpose": self.purpose_node,
         }
+
+        self.category_map = {
+            "Undergraduate essay": "undergrad_essay",
+            "Graduate admissions statement": "grad_admissions_statement",
+        }
+        
+    def retrieve_criteria(self, category, k=3):
+        criteria = []
+        query = f"What makes a strong {category}"
+        internal_category = self.category_map.get(category, "")
+        if not internal_category:
+            return []
+        for doc, score in self.store.similarity_search_with_score(query, k=k, filter={"category": internal_category}):
+            if score < 1.2:
+                criteria.append(doc.page_content)
+
+        return criteria
 
     def grammar_node(self, state):
         passage = state["passage"]
@@ -165,7 +188,7 @@ class TutorGraph:
         builder.add_edge("synthesis", END)
         return builder.compile()
 
-    def run(self, passage, topic, purpose, history="", enabled=None):
+    def run(self, passage, topic, purpose, category, history="", enabled=None):
         if enabled is None:
             enabled = list(self.analyzers)
 
@@ -179,6 +202,7 @@ class TutorGraph:
         initial_state = {
             "passage": passage, "topic": topic, "purpose": purpose,
             "history": history, "critiques": [], "feedback": "",
+            "criteria": self.retrieve_criteria(category),
         }
 
         return graph.invoke(initial_state)

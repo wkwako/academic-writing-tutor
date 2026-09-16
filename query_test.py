@@ -15,16 +15,16 @@ store = Chroma(
 
 #print (store._collection.count())
 
-results = store.similarity_search("what makes a thesis statement arguable", k=3)
-for doc in results:
-    print(doc.metadata)
-    print(doc.page_content[:200])
-    print("---")
-
-# store.similarity_search("how should I open", k=3, filter={"category": "grad_statement"})
-
-# query = "what makes a thesis statement arguable"
-# for doc, score in store.similarity_search_with_score(query, k=3):
-#     print(round(score, 3), doc.metadata["source"])
-#     print(doc.page_content[:200])
+# results = store.similarity_search("how should I open", k=3, filter={"category": "undergrad_essay"})
+# for doc in results:
+#     print(doc.metadata)
+#     print(doc.page_content[:500])
 #     print("---")
+
+query = "what makes a thesis statement arguable" #returns scores of ~0.7-0.8
+query = "what makes a strong undergraduate essay" #returns scores of ~0.8-1.0
+# query = "how do I bake sourdough bread" #returns scores of ~1.7
+for doc, score in store.similarity_search_with_score(query, k=3):
+    print(round(score, 3), doc.metadata["source"])
+    print(doc.page_content[:500])
+    print("---")

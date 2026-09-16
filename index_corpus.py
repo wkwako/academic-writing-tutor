@@ -20,8 +20,6 @@ def index_corpus():
             text = file.read_text(encoding="utf-8")
             docs.append(Document(page_content=text, metadata={"category": folder.name, "source": file.name}))
 
-    #return docs
-
     #chunk
     splitter = RecursiveCharacterTextSplitter(chunk_size=800, chunk_overlap=100)
     chunks = splitter.split_documents(docs)
