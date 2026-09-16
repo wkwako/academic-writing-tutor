@@ -39,17 +39,18 @@ class TutorGraph:
             "Graduate admissions statement": "grad_admissions_statement",
         }
         
-    def retrieve_criteria(self, category, k=3):
-        criteria = []
-        query = f"What makes a strong {category}"
+    def retrieve_criteria(self, category, k=6):
+        #criteria = []
+        #query = f"What makes a strong {category}"
         internal_category = self.category_map.get(category, "")
         if not internal_category:
             return []
-        for doc, score in self.store.similarity_search_with_score(query, k=k, filter={"category": internal_category}):
-            if score < 1.2:
-                criteria.append(doc.page_content)
 
-        return criteria
+        results = self.store.get(where={"category": internal_category})
+        print(len(results["documents"]))
+        print(sum(len(d) for d in results["documents"]))
+
+        return results["documents"]
 
     def grammar_node(self, state):
         passage = state["passage"]
@@ -103,6 +104,7 @@ class TutorGraph:
     def structure_node(self, state):
         passage = state["passage"]
         history = state["history"]
+        criteria = state["criteria"]
 
         if history:
             user_content = (
@@ -113,7 +115,7 @@ class TutorGraph:
             user_content = f"Current passage: \n{passage}"
 
         response = self.cheap_model.invoke([
-            {"role": "system", "content": static_variables.structure_prompt()},
+            {"role": "system", "content": static_variables.structure_prompt(criteria)},
             {"role": "user", "content": user_content}
         ])
         
@@ -209,8 +211,9 @@ class TutorGraph:
 
 if __name__ == "__main__":
     tutor = TutorGraph()
-    passage = "The French Revolution were caused by many things. There was economic problems, social inequality, and enlightenment ideas that spreaded through france. The common people, who was called the Third Estate, they paid most of the taxes while the nobility payed almost nothing. This made people very angry and upset and mad. Bread prices was also very high, and many people could not afford to eat, which is similar to how modern inflation affects grocery costs today. The king, Louis XVI, he was not a strong leader and he failed to fix the countrys financial crisis. Enlightenment thinkers like Rousseau and Voltaire, they wrote about liberty and equality. These ideas made people question the monarchy. In conclusion there was many causes of the french revolution and it changed history forever."
-    topic = "Discuss the causes of the French Revolution"
-    purpose = "a first-year undergraduate history essay"
+    # passage = "The French Revolution were caused by many things. There was economic problems, social inequality, and enlightenment ideas that spreaded through france. The common people, who was called the Third Estate, they paid most of the taxes while the nobility payed almost nothing. This made people very angry and upset and mad. Bread prices was also very high, and many people could not afford to eat, which is similar to how modern inflation affects grocery costs today. The king, Louis XVI, he was not a strong leader and he failed to fix the countrys financial crisis. Enlightenment thinkers like Rousseau and Voltaire, they wrote about liberty and equality. These ideas made people question the monarchy. In conclusion there was many causes of the french revolution and it changed history forever."
+    # topic = "Discuss the causes of the French Revolution"
+    # purpose = "a first-year undergraduate history essay"
+    # print(tutor.run(passage, topic, purpose, category="Undergraduate essay"))
 
-    print(tutor.run(passage, topic, purpose))
+    print (tutor.retrieve_criteria("Undergraduate essay", k=6))

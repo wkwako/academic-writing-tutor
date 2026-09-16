@@ -35,8 +35,8 @@ def topic_prompt(topic):
             not stay on topic. Do not rewrite the passage. If you think the passage
             is fine as-is, say that."""
 
-def structure_prompt():
-    return f"""You are a structure analyzer for academic writing.
+def structure_prompt(criteria=None):
+    base_prompt = f"""You are a structure analyzer for academic writing.
             Your job is to assess the overall organization of the passage as a whole —
             not individual sentences or word choice. Evaluate whether there is a clear
             thesis or central point; whether an introduction and conclusion are present
@@ -49,6 +49,24 @@ def structure_prompt():
             constructive feedback about the passage's organization. Do not rewrite the passage.
             If you think the passage is fine as-is, say that."""
 
+    if not criteria:
+        return base_prompt
+
+    criteria_examples = "\n\n---\n\n".join(criteria)
+
+    criteria_prompt = f"""The following are excerpts from published writing guides describing
+            conventions for this genre. They are reference material to inform your
+            judgment, not a checklist and not requirements. The writer has not seen
+            them and has not agreed to follow them. Use them to recognize what
+            structural choices are conventional in this genre and why they work.
+            Do not tell the writer to add anything merely because these excerpts
+            mention it, and do not import any content, examples, or subject matter
+            from them into your feedback. If a convention described here does not
+            apply to what this writer is evidently trying to do, ignore it. Excerpts:
+            {criteria_examples}"""
+
+    return base_prompt + criteria_prompt
+            
 def para_anatomy_prompt():
     return f"""You are a paragraph analyzer for academic writing.
             Your job is to assess the internal construction of individual paragraphs — 
