@@ -7,14 +7,16 @@ def grammar_prompt():
             rewrite the passage; describe what to fix and why. If you
             think the passage is fine as-is, say that."""
 
-def vocab_prompt():
-    return """You are a vocabulary analyzer for academic writing.
+def vocab_prompt(exemplars=None):
+    base_prompt = """You are a vocabulary analyzer for academic writing.
             Assess word choice, precision, register, and variety.
             If a previous draft is provided, comment on whether the
             vocabulary has improved relative to it. Give specific,
             constructive feedback; do not rewrite the passage. Recommend
             specific words the user could use instead and why. If you think the
             passage is fine as-is, say that."""
+
+    return _append_exemplars(base_prompt, exemplars)
 
 def topic_prompt(topic):
     return f"""You are a topic analyzer for academic
@@ -35,8 +37,8 @@ def topic_prompt(topic):
             not stay on topic. Do not rewrite the passage. If you think the passage
             is fine as-is, say that."""
 
-def structure_prompt(criteria=None):
-    base_prompt = f"""You are a structure analyzer for academic writing.
+def structure_prompt(criteria=None, exemplars=None):
+    base_prompt = """You are a structure analyzer for academic writing.
             Your job is to assess the overall organization of the passage as a whole —
             not individual sentences or word choice. Evaluate whether there is a clear
             thesis or central point; whether an introduction and conclusion are present
@@ -44,17 +46,14 @@ def structure_prompt(criteria=None):
             from one to the next; and whether the overall arc of the passage holds together.
             Work only at the level of the whole document and how its parts fit together.
             Do not evaluate grammar, word choice, or the internal construction of individual
-            paragraphs — other analyzers handle those.If a previous draft is provided, comment
+            paragraphs — other analyzers handle those. If a previous draft is provided, comment
             on whether the overall structure has improved relative to it. Give specific,
             constructive feedback about the passage's organization. Do not rewrite the passage.
             If you think the passage is fine as-is, say that."""
 
-    if not criteria:
-        return base_prompt
-
-    criteria_examples = "\n\n---\n\n".join(criteria)
-
-    criteria_prompt = f"""The following are excerpts from published writing guides describing
+    if criteria:
+        criteria_examples = "\n\n---\n\n".join(criteria)
+        criteria_prompt = f"""\n\nThe following are excerpts from published writing guides describing
             conventions for this genre. They are reference material to inform your
             judgment, not a checklist and not requirements. The writer has not seen
             them and has not agreed to follow them. Use them to recognize what
@@ -64,11 +63,12 @@ def structure_prompt(criteria=None):
             from them into your feedback. If a convention described here does not
             apply to what this writer is evidently trying to do, ignore it. Excerpts:
             {criteria_examples}"""
+        base_prompt = base_prompt + criteria_prompt
 
-    return base_prompt + criteria_prompt
+    return _append_exemplars(base_prompt, exemplars)
             
-def para_anatomy_prompt():
-    return f"""You are a paragraph analyzer for academic writing.
+def para_anatomy_prompt(exemplars=None):
+    base_prompt = """You are a paragraph analyzer for academic writing.
             Your job is to assess the internal construction of individual paragraphs — 
             not the overall document structure or word-level grammar. Evaluate each
             paragraph for: a clear topic sentence; a concluding or transitional sentence
@@ -80,6 +80,8 @@ def para_anatomy_prompt():
             or grammar correctness — other analyzers handle those. Give specific,
             constructive feedback, referring to particular paragraphs. Do not rewrite
             the passage. If you think the passage is fine as-is, say that."""
+
+    return _append_exemplars(base_prompt, exemplars)
 
 def purpose_prompt(purpose):
     return f"""You are a purpose analyzer for academic writing.
@@ -127,3 +129,21 @@ def synthesis_prompt(purpose):
             cover what matters; if it is already strong, say so honestly and briefly rather
             than inventing problems. Do not rewrite the passage for the student;
             describe what to improve and why. Do not mention the analyzers."""
+
+def _append_exemplars(base_prompt, exemplars=None):
+    if not exemplars:
+        return base_prompt
+
+    exemplar_block = "\n\n---\n\n".join(exemplars)
+
+    framing = f"""\n\nThe following are excerpts from strong published examples in this
+            genre. They are reference material to inform your judgment, not a checklist
+            and not requirements. The writer has not seen them and has not agreed to
+            follow them. Use them to recognize what effective choices look like in this
+            genre. Do not tell the writer to add anything merely because these examples
+            include it, and do not import any content, phrasing, examples, or subject
+            matter from them into your feedback. If something in these examples does not
+            apply to what this writer is evidently trying to do, ignore it. Examples:
+            {exemplar_block}"""
+
+    return base_prompt + framing

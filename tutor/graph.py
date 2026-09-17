@@ -6,6 +6,7 @@ from operator import add
 from dotenv import load_dotenv
 from langchain_anthropic import ChatAnthropic
 from . import static_variables
+import random
 load_dotenv()
 
 class TutorState(TypedDict):
@@ -16,6 +17,7 @@ class TutorState(TypedDict):
     purpose: str #what it's for
     feedback: str #what the student sees (built by synthesizer)
     criteria: list
+    exemplars: list
 
 class TutorGraph:
     def __init__(self, max_tokens=20000):
@@ -23,7 +25,7 @@ class TutorGraph:
         self.strong_model = ChatAnthropic(model="claude-sonnet-5", max_tokens=max_tokens)
 
         embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
-        self.store = Chroma(collection_name="criteria", persist_directory="chroma_db", embedding_function=embeddings)
+        self.store = Chroma(collection_name="corpus", persist_directory="chroma_db", embedding_function=embeddings)
 
         self.analyzers = {
             "grammar": self.grammar_node,
@@ -38,17 +40,38 @@ class TutorGraph:
             "Undergraduate essay": "undergrad_essay",
             "Graduate admissions statement": "grad_admissions_statement",
         }
-        
-    def retrieve_criteria(self, category, k=6):
-        #criteria = []
-        #query = f"What makes a strong {category}"
+
+    def retrieve_exemplars(self, category, n=2):
         internal_category = self.category_map.get(category, "")
         if not internal_category:
             return []
 
-        results = self.store.get(where={"category": internal_category})
-        print(len(results["documents"]))
-        print(sum(len(d) for d in results["documents"]))
+        results = self.store.get(where={"$and": [
+            {"category": internal_category},
+            {"kind": "exemplars"},
+        ]})
+
+        # Group chunks back into whole essays, keyed by source filename.
+        essays = {}
+        for text, meta in zip(results["documents"], results["metadatas"]):
+            essays.setdefault(meta["source"], []).append(text)
+
+        if not essays:
+            return []
+
+        # Sample 1–n whole essays at random (genre-based, never similarity).
+        chosen = random.sample(list(essays), min(n, len(essays)))
+        return ["\n".join(essays[source]) for source in chosen]
+    
+    def retrieve_criteria(self, category):
+        internal_category = self.category_map.get(category, "")
+        if not internal_category:
+            return []
+
+        results = self.store.get(where={"$and": [
+            {"category": internal_category},
+            {"kind": "guide"},
+        ]})
 
         return results["documents"]
 
@@ -65,6 +88,7 @@ class TutorGraph:
     def vocab_node(self, state):
         passage = state["passage"]
         history = state["history"]
+        exemplars = state["exemplars"]
 
         if history:
             user_content = (
@@ -75,7 +99,7 @@ class TutorGraph:
             user_content = f"Current passage: \n{passage}"
 
         response = self.cheap_model.invoke([
-            {"role": "system", "content": static_variables.vocab_prompt()},
+            {"role": "system", "content": static_variables.vocab_prompt(exemplars)},
             {"role": "user", "content": user_content}
         ])
 
@@ -105,6 +129,7 @@ class TutorGraph:
         passage = state["passage"]
         history = state["history"]
         criteria = state["criteria"]
+        exemplars = state["exemplars"]
 
         if history:
             user_content = (
@@ -115,7 +140,7 @@ class TutorGraph:
             user_content = f"Current passage: \n{passage}"
 
         response = self.cheap_model.invoke([
-            {"role": "system", "content": static_variables.structure_prompt(criteria)},
+            {"role": "system", "content": static_variables.structure_prompt(criteria, exemplars)},
             {"role": "user", "content": user_content}
         ])
         
@@ -124,6 +149,7 @@ class TutorGraph:
     def para_anatomy_node(self, state):
         passage = state["passage"]
         history = state["history"]
+        exemplars = state["exemplars"]
 
         if history:
             user_content = (
@@ -134,7 +160,7 @@ class TutorGraph:
             user_content = f"Current passage: \n{passage}"
 
         response = self.cheap_model.invoke([
-            {"role": "system", "content": static_variables.para_anatomy_prompt()},
+            {"role": "system", "content": static_variables.para_anatomy_prompt(exemplars)},
             {"role": "user", "content": user_content}
         ])
 
@@ -205,6 +231,7 @@ class TutorGraph:
             "passage": passage, "topic": topic, "purpose": purpose,
             "history": history, "critiques": [], "feedback": "",
             "criteria": self.retrieve_criteria(category),
+            "exemplars": self.retrieve_exemplars(category),
         }
 
         return graph.invoke(initial_state)
@@ -216,4 +243,4 @@ if __name__ == "__main__":
     # purpose = "a first-year undergraduate history essay"
     # print(tutor.run(passage, topic, purpose, category="Undergraduate essay"))
 
-    print (tutor.retrieve_criteria("Undergraduate essay", k=6))
+    print (tutor.retrieve_criteria("Undergraduate essay"))

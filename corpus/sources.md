@@ -11,3 +11,4 @@
     * This work is licensed under a Creative Commons Attribution-NonCommercial-NoDerivs 3.0 Unported License
 10. Kennesaw State — campus.kennesaw.edu/current-students/academics/writing-center/open-educational-resources/argument-essay/guidelines.php
     * Creative Commons Attribution 4.0 International License
+11. All 7 essays from College Essay Guy: https://www.collegeessayguy.com/blog/statement-of-purpose-examples
