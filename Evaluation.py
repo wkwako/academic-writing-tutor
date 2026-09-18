@@ -29,19 +29,27 @@ class Evaluation():
 
     def generate_passage(self, model):
         #uses topic and purpose
-        pass
+        prompt = """prompt goes here. include topic, purpose, length, etc."""
+        response = model.invoke(prompt)
+        return response.content
 
     def generate_feedback(self, model, passage):
         #uses topic and purpose
-        pass
+        prompt = """prompt goes here. include topic, purpose, passage, etc."""
+        response = model.invoke(prompt)
+        return response.content
 
     def rewrite_passage(self, model, passage, feedback):
         #rewrite should not use topic or purpose at all; only the feedback
-        pass
+        prompt = """prompt goes here. do not use topic or purpose, only feedback."""
+        response = model.invoke(prompt)
+        return response.content
 
     def generate_evaluation(self, model, rewritten_passage1, rewritten_passage2):
         #uses topic and purpose
-        pass
+        prompt = """prompt goes here. use topic, purpose, and new passages. have LLM output "passage1" or "passage2" at top, then two newlines, then reason."""
+        response = model.invoke(model)
+        return response.content
 
     def write_result(self, num_result, passage, model1_name, feedback1, rewritten_passage1, model2_name, feedback2, rewritten_passage2, evaluation):
         #extract winner and reason here
@@ -50,16 +58,17 @@ class Evaluation():
 
         info = {
             "passage": passage,
-            "model1_name": model1_name,
+            "passage1_name": model1_name,
             "feedback1": feedback1,
             "rewritten_passage1": rewritten_passage1,
-            "model2_name": model2_name,
+            "passage2_name": model2_name,
             "feedback2": feedback2,
             "rewritten_passage2": rewritten_passage2,
             "winner": winner,
             "reason": reason,
 
         }
+        #winner model name in info[info["winner"]+"_name"]
         self.results[num_result] = info
 
     def one_pass(self, num_result):
