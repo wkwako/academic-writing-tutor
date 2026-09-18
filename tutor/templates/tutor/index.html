@@ -23,6 +23,13 @@
             <label for="purpose">Purpose <span class="optional">(optional)</span></label>
             <textarea id="purpose" name="purpose" rows="2" placeholder="What is it for? e.g. a cover letter, a history essay">{{ purpose_text }}</textarea> <br>
 
+            <label for="category">Type of writing</label>
+            <select id="category" name="category">
+                {% for c in categories %}
+                <option value="{{ c }}" {% if c == selected_category %}selected{% endif %}>{{ c }}</option>
+                {% endfor %}
+            </select> <br>
+
             <fieldset class="analyzers">
                 <legend>Feedback to include</legend>
                 {% for a in analyzers %}

@@ -13,9 +13,12 @@ ANALYZER_LABELS = [
 ]
 
 def tutor_page(request):
+    categories = list(tutor.category_map)
+
     submitted_text = ""
     topic = ""
     purpose = ""
+    category = categories[0]
     result = {"feedback": ""}
     enabled = [name for name, _ in ANALYZER_LABELS]
 
@@ -23,10 +26,11 @@ def tutor_page(request):
         submitted_text = request.POST.get("passage", "")
         topic = request.POST.get("topic", "")
         purpose = request.POST.get("purpose", "")
+        category = request.POST.get("category", categories[0])
         enabled = request.POST.getlist("analyzers")
 
         history = request.session.get("history", "")
-        result = tutor.run(submitted_text, topic, purpose, history=history, enabled=enabled)
+        result = tutor.run(submitted_text, topic, purpose, category, history=history, enabled=enabled)
 
         request.session["history"] = (
             f"Previous draft:\n{submitted_text}\n\n"
@@ -38,6 +42,8 @@ def tutor_page(request):
         "feedback": result["feedback"],
         "topic_text": topic,
         "purpose_text": purpose,
+        "categories": categories,
+        "selected_category": category,
         "analyzers": [
             {"name": name, "label": label, "checked": name in enabled}
             for name, label in ANALYZER_LABELS
