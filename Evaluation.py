@@ -1,7 +1,10 @@
 import json
 from langchain_anthropic import ChatAnthropic
 from langchain_openai import ChatOpenAI
-import random
+from dotenv import load_dotenv
+from tutor.graph import TutorGraph
+import os
+load_dotenv()
 
 class Evaluation():
     def __init__(self, max_tokens=50000):
@@ -9,10 +12,10 @@ class Evaluation():
         self.model_a = ChatAnthropic(model="claude-haiku-4-5-20251001", max_tokens=max_tokens)
 
         #feedback generator models
-        self.model_webapp = ChatAnthropic(model="claude-haiku-4-5-20251001", max_tokens=max_tokens)
+        self.tutor = TutorGraph(max_tokens=max_tokens)
         self.cheap_model = ChatAnthropic(model="claude-haiku-4-5-20251001", max_tokens=max_tokens)
         self.strong_model = ChatAnthropic(model="claude-sonnet-5", max_tokens=max_tokens)
-        self.tested_models = {"webapp": self.model_webapp, "cheap": self.cheap_model, "strong": self.strong_model}
+        self.tested_models = {"webapp": None, "cheap": self.cheap_model, "strong": self.strong_model}
     
         #define passage rewriter model
         self.model_b = ChatAnthropic(model="claude-sonnet-5", max_tokens=max_tokens)
@@ -25,16 +28,33 @@ class Evaluation():
 
         self.results = {}
 
-    def generate_passage(self, model, field="an unspecified field", flaw_focus="a mix of grammar, structure, and vague generic claims"):
+    def generate_passage(self, model, field="an unspecified field", flaw_focus=None):
         prompt = f"""Write a two-paragraph personal statement for a graduate school application in {field}.
 
-        The statement should read like a real but flawed first draft from an applicant who is not a strong writer. Introduce genuine, realistic weaknesses — emphasizing {flaw_focus} — of the kind a writing tutor would want to address: for example generic unsupported claims, weak or cliched openings, grammatical errors, imprecise word choice, or disorganized structure.
+        The statement should read like a real but flawed first draft from an applicant who is not a strong writer. The applicant HAS concrete, specific content — real experiences, named activities, particular details — but expresses it poorly. Introduce genuine, realistic weaknesses of these kinds ONLY:
+        - grammatical errors (subject-verb agreement, verb tense, run-ons, comma splices, apostrophes)
+        - awkward or imprecise word choice, and wrong-register or repetitive vocabulary
+        - tangled or monotonous sentence structure
+        - disorganized paragraph structure — ideas in an illogical order, a buried or missing thesis, weak transitions, a conclusion that doesn't land
 
-        Make the flaws realistic and uneven, not uniform — a real draft has some sentences that work and some that don't. Do not make it a parody or comically bad; it should be a plausible submission. Do not include any commentary, labels, or notes about the flaws — output only the statement itself."""
+        Do NOT make the flaws be missing content, vagueness, or generic unsupported claims. The applicant should already include specific examples and concrete details; the problems should be in how that material is written and organized, not in whether it exists. Every weakness you introduce should be fixable by correcting or rearranging what is already on the page, without needing to invent new facts.
+
+        Make the flaws realistic and uneven — a real draft has some sentences that work and some that don't. Do not make it a parody. Do not include any commentary, labels, or notes about the flaws — output only the statement itself."""
         response = model.invoke(prompt)
-        return response.content
+        return self._extract_text(response)
 
-    def generate_feedback(self, model, passage):
+    def generate_feedback(self, name, model, passage):
+        if name == "webapp":
+            result = self.tutor.run(
+                passage,
+                topic=self.topic,
+                purpose=self.purpose,
+                category="Graduate admissions statement",
+                history="",
+                enabled=None,   # all analyzers
+            )
+            return result["feedback"]
+
         prompt = f"""You are an academic writing tutor. A student has submitted the following passage for feedback.
 
         Topic: {self.topic}
@@ -45,7 +65,7 @@ class Evaluation():
 
         Give the student thorough, specific, constructive feedback on how to improve this passage. Consider all relevant dimensions: grammar and mechanics, vocabulary and word choice, how well it stays on topic, overall structure and organization, the internal construction of individual paragraphs, and how well it achieves its stated purpose. Prioritize what matters most.
 
-        Write your feedback as flowing prose addressed to the student. Do not rewrite the passage for them; describe what to improve and why. Do not use headers or bullet points."""
+        Write your feedback as flowing prose addressed to the student. Do not use headers, bold text, or bullet points; write in plain paragraphs. Do not rewrite the passage for them; describe what to improve and why."""
         response = model.invoke(prompt)
         return response.content
 
@@ -62,7 +82,7 @@ class Evaluation():
         Feedback:
         {feedback}"""
         response = model.invoke(prompt)
-        return response.content
+        return self._extract_text(response)
 
     def generate_evaluation(self, model, rewritten_passage1, rewritten_passage2):
         prompt = f"""Two revised versions of a graduate school personal statement are shown below. Judge which is the stronger piece of writing for its stated context.
@@ -80,7 +100,7 @@ class Evaluation():
         Passage 2:
         {rewritten_passage2}"""
         response = model.invoke(prompt)
-        return response.content
+        return self._extract_text(response)
 
     def write_result(self, num_result, passage, model1_name, feedback1, rewritten_passage1, model2_name, feedback2, rewritten_passage2, evaluation):
         first_line = evaluation.strip().split("\n")[0].lower()
@@ -115,9 +135,9 @@ class Evaluation():
         model1 = self.tested_models[name1]
         model2 = self.tested_models[name2]
 
-        feedback1 = self.generate_feedback(model1, passage)
+        feedback1 = self.generate_feedback(name1, model1, passage)
         rewritten1 = self.rewrite_passage(self.model_b, passage, feedback1)
-        feedback2 = self.generate_feedback(model2, passage)
+        feedback2 = self.generate_feedback(name2, model2, passage)
         rewritten2 = self.rewrite_passage(self.model_b, passage, feedback2)
 
         #both orderings to control position bias
@@ -168,3 +188,21 @@ class Evaluation():
             for name1, name2 in pairings:
                 self.run_pairing(num_result, passage, name1, name2)
                 num_result += 1
+
+    def generate_passage_set(self):
+        specs = [
+            ("public policy", "vague generic claims and weak structure"),
+            #("molecular biology", "grammatical errors and imprecise word choice"),
+            #("comparative literature", "a cliched opening and disorganized paragraphs"),
+            #("mechanical engineering", "flat vocabulary and unsupported assertions"),
+            #("clinical psychology", "a mix of grammar, structure, and vagueness"),
+        ]
+        passages = []
+        for field, flaw_focus in specs:
+            passages.append(self.generate_passage(self.model_a, field=field, flaw_focus=flaw_focus))
+        return passages
+
+if __name__ == "__main__":
+    evaluator = Evaluation()
+    passages = evaluator.generate_passage_set()
+    evaluator.evaluate(passages)

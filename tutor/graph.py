@@ -83,7 +83,7 @@ class TutorGraph:
             {"role": "user", "content": passage}
         ])
 
-        return {"critiques": [f"GRAMMAR: {response.content}"]}
+        return {"critiques": [f"GRAMMAR: {self._extract_text(response)}"]}
 
     def vocab_node(self, state):
         passage = state["passage"]
@@ -103,7 +103,7 @@ class TutorGraph:
             {"role": "user", "content": user_content}
         ])
 
-        return {"critiques": [f"VOCAB: {response.content}"]}
+        return {"critiques": [f"VOCAB: {self._extract_text(response)}"]}
 
     def topic_node(self, state):
         passage = state["passage"]
@@ -123,7 +123,7 @@ class TutorGraph:
             {"role": "user", "content": user_content}
         ])
 
-        return {"critiques": [f"TOPIC: {response.content}"]}
+        return {"critiques": [f"TOPIC: {self._extract_text(response)}"]}
 
     def structure_node(self, state):
         passage = state["passage"]
@@ -144,7 +144,7 @@ class TutorGraph:
             {"role": "user", "content": user_content}
         ])
         
-        return {"critiques": [f"STRUCTURE: {response.content}"]}
+        return {"critiques": [f"STRUCTURE: {self._extract_text(response)}"]}
 
     def para_anatomy_node(self, state):
         passage = state["passage"]
@@ -164,7 +164,7 @@ class TutorGraph:
             {"role": "user", "content": user_content}
         ])
 
-        return {"critiques": [f"PARAGRAPH ANATOMY: {response.content}"]}
+        return {"critiques": [f"PARAGRAPH ANATOMY: {self._extract_text(response)}"]}
 
     def purpose_node(self, state):
         passage = state["passage"]
@@ -184,7 +184,7 @@ class TutorGraph:
             {"role": "user", "content": user_content}
         ])
 
-        return {"critiques": [f"PURPOSE: {response.content}"]}
+        return {"critiques": [f"PURPOSE: {self._extract_text(response)}"]}
 
     def synthesis_node(self, state):
         passage = state["passage"]
@@ -202,7 +202,7 @@ class TutorGraph:
                     {"role": "user", "content": user_content}
                 ])
 
-        return {"feedback": response.content}
+        return {"feedback": self._extract_text(response)}
 
     def _build(self, enabled):
         builder = StateGraph(TutorState)
@@ -215,6 +215,13 @@ class TutorGraph:
 
         builder.add_edge("synthesis", END)
         return builder.compile()
+
+    def _extract_text(self, response):
+        content = response.content
+        if isinstance(content, str):
+            return content
+        parts = [block.get("text", "") for block in content if isinstance(block, dict) and block.get("type") == "text"]
+        return "".join(parts)
 
     def run(self, passage, topic, purpose, category, history="", enabled=None):
         if enabled is None:
