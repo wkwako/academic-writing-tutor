@@ -31,5 +31,5 @@ class Analysis:
         return tally
 
 if __name__ == "__main__":
-    analysis = Analysis("strong_analyzers_strong_synthesis.jsonl")
+    analysis = Analysis("weak_analyzers_strong_synthesis_results.jsonl")
     print (analysis.tally_results2())

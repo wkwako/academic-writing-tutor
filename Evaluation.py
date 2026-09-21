@@ -200,11 +200,11 @@ class Evaluation():
 
     def generate_passage_set(self):
         specs = [
-            ("public policy", "disorganized paragraph order and a buried thesis"),
-            ("molecular biology", "subject-verb agreement errors and tense inconsistency"),
-            ("comparative literature", "run-on sentences and comma splices"),
-            ("mechanical engineering", "monotonous sentence structure and repetitive phrasing"),
-            ("clinical psychology", "imprecise word choice and wrong register"),
+            #("public policy", "disorganized paragraph order and a buried thesis"),
+            #("molecular biology", "subject-verb agreement errors and tense inconsistency"),
+            #("comparative literature", "run-on sentences and comma splices"),
+            #("mechanical engineering", "monotonous sentence structure and repetitive phrasing"),
+            #("clinical psychology", "imprecise word choice and wrong register"),
             ("economics", "weak transitions and an ending that doesn't land"),
             ("environmental science", "a mix of grammar errors and tangled syntax"),
             ("art history", "awkward vocabulary and misplaced modifiers"),

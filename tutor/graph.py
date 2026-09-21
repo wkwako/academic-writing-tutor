@@ -88,7 +88,7 @@ class TutorGraph:
     def vocab_node(self, state):
         passage = state["passage"]
         history = state["history"]
-        exemplars = state["exemplars"]
+        exemplars = None
 
         if history:
             user_content = (
@@ -128,8 +128,8 @@ class TutorGraph:
     def structure_node(self, state):
         passage = state["passage"]
         history = state["history"]
-        criteria = state["criteria"]
-        exemplars = state["exemplars"]
+        criteria = None
+        exemplars = None
 
         if history:
             user_content = (
@@ -149,7 +149,7 @@ class TutorGraph:
     def para_anatomy_node(self, state):
         passage = state["passage"]
         history = state["history"]
-        exemplars = state["exemplars"]
+        exemplars = None
 
         if history:
             user_content = (
