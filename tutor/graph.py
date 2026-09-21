@@ -78,7 +78,7 @@ class TutorGraph:
     def grammar_node(self, state):
         passage = state["passage"]
 
-        response = self.cheap_model.invoke([
+        response = self.strong_model.invoke([
             {"role": "system", "content": static_variables.grammar_prompt()},
             {"role": "user", "content": passage}
         ])
@@ -98,7 +98,7 @@ class TutorGraph:
         else:
             user_content = f"Current passage: \n{passage}"
 
-        response = self.cheap_model.invoke([
+        response = self.strong_model.invoke([
             {"role": "system", "content": static_variables.vocab_prompt(exemplars)},
             {"role": "user", "content": user_content}
         ])
@@ -118,7 +118,7 @@ class TutorGraph:
         else:
             user_content = f"Current passage: \n{passage}"
 
-        response = self.cheap_model.invoke([
+        response = self.strong_model.invoke([
             {"role": "system", "content": static_variables.topic_prompt(topic)},
             {"role": "user", "content": user_content}
         ])
@@ -139,7 +139,7 @@ class TutorGraph:
         else:
             user_content = f"Current passage: \n{passage}"
 
-        response = self.cheap_model.invoke([
+        response = self.strong_model.invoke([
             {"role": "system", "content": static_variables.structure_prompt(criteria, exemplars)},
             {"role": "user", "content": user_content}
         ])
@@ -159,7 +159,7 @@ class TutorGraph:
         else:
             user_content = f"Current passage: \n{passage}"
 
-        response = self.cheap_model.invoke([
+        response = self.strong_model.invoke([
             {"role": "system", "content": static_variables.para_anatomy_prompt(exemplars)},
             {"role": "user", "content": user_content}
         ])
@@ -179,7 +179,7 @@ class TutorGraph:
         else:
             user_content = f"Current passage: \n{passage}"
 
-        response = self.cheap_model.invoke([
+        response = self.strong_model.invoke([
             {"role": "system", "content": static_variables.purpose_prompt(purpose)},
             {"role": "user", "content": user_content}
         ])
@@ -220,6 +220,7 @@ class TutorGraph:
         content = response.content
         if isinstance(content, str):
             return content
+        # content is a list of blocks; concatenate the text blocks
         parts = [block.get("text", "") for block in content if isinstance(block, dict) and block.get("type") == "text"]
         return "".join(parts)
 

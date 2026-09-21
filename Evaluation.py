@@ -28,7 +28,14 @@ class Evaluation():
 
         self.results = {}
 
-    def generate_passage(self, model, field="an unspecified field", flaw_focus=None):
+    def _extract_text(self, response):
+        content = response.content
+        if isinstance(content, str):
+            return content
+        parts = [block.get("text", "") for block in content if isinstance(block, dict) and block.get("type") == "text"]
+        return "".join(parts)
+
+    def generate_passage(self, model, field="an unspecified field", flaw_focus="a mix of the flaw types below"):
         prompt = f"""Write a two-paragraph personal statement for a graduate school application in {field}.
 
         The statement should read like a real but flawed first draft from an applicant who is not a strong writer. The applicant HAS concrete, specific content — real experiences, named activities, particular details — but expresses it poorly. Introduce genuine, realistic weaknesses of these kinds ONLY:
@@ -39,7 +46,7 @@ class Evaluation():
 
         Do NOT make the flaws be missing content, vagueness, or generic unsupported claims. The applicant should already include specific examples and concrete details; the problems should be in how that material is written and organized, not in whether it exists. Every weakness you introduce should be fixable by correcting or rearranging what is already on the page, without needing to invent new facts.
 
-        Make the flaws realistic and uneven — a real draft has some sentences that work and some that don't. Do not make it a parody. Do not include any commentary, labels, or notes about the flaws — output only the statement itself."""
+        Make the flaws realistic and uneven — a real draft has some sentences that work and some that don't. Weight this particular draft toward these flaws in particular: {flaw_focus}. Do not make it a parody. Do not include any commentary, labels, or notes about the flaws — output only the statement itself."""
         response = model.invoke(prompt)
         return self._extract_text(response)
 
@@ -67,7 +74,7 @@ class Evaluation():
 
         Write your feedback as flowing prose addressed to the student. Do not use headers, bold text, or bullet points; write in plain paragraphs. Do not rewrite the passage for them; describe what to improve and why."""
         response = model.invoke(prompt)
-        return response.content
+        return self._extract_text(response)
 
     def rewrite_passage(self, model, passage, feedback):
         prompt = f"""Below is a passage and a set of feedback on that passage. Revise the passage by applying the feedback.
@@ -131,7 +138,7 @@ class Evaluation():
         with open("results.jsonl", "a") as f:
             f.write(json.dumps({"num_result": num_result, **info}) + "\n")
 
-    def run_pairing(self, num_result, passage, name1, name2):
+    def run_pairing(self, num_result, passage, field, flaw_focus, name1, name2):
         model1 = self.tested_models[name1]
         model2 = self.tested_models[name2]
 
@@ -154,6 +161,8 @@ class Evaluation():
 
         info = {
             "passage": passage,
+            "field": field,
+            "flaw_focus": flaw_focus,
             "model1_name": name1,
             "feedback1": feedback1,
             "rewritten1": rewritten1,
@@ -178,29 +187,35 @@ class Evaluation():
             return slot2_name
         return None
 
-    def evaluate(self, passages):
+    def evaluate(self, passage_set):
         open("results.jsonl", "w").close()   # clear file at start of run
 
         pairings = [("webapp", "cheap"), ("webapp", "strong"), ("cheap", "strong")]
 
         num_result = 0
-        for passage in passages:
+        for passage, field, flaw_focus in passage_set:
             for name1, name2 in pairings:
-                self.run_pairing(num_result, passage, name1, name2)
+                self.run_pairing(num_result, passage, field, flaw_focus, name1, name2)
                 num_result += 1
 
     def generate_passage_set(self):
         specs = [
-            ("public policy", "vague generic claims and weak structure"),
-            #("molecular biology", "grammatical errors and imprecise word choice"),
-            #("comparative literature", "a cliched opening and disorganized paragraphs"),
-            #("mechanical engineering", "flat vocabulary and unsupported assertions"),
-            #("clinical psychology", "a mix of grammar, structure, and vagueness"),
+            ("public policy", "disorganized paragraph order and a buried thesis"),
+            ("molecular biology", "subject-verb agreement errors and tense inconsistency"),
+            ("comparative literature", "run-on sentences and comma splices"),
+            ("mechanical engineering", "monotonous sentence structure and repetitive phrasing"),
+            ("clinical psychology", "imprecise word choice and wrong register"),
+            ("economics", "weak transitions and an ending that doesn't land"),
+            ("environmental science", "a mix of grammar errors and tangled syntax"),
+            ("art history", "awkward vocabulary and misplaced modifiers"),
+            ("computer science", "illogical idea order and missing topic sentences"),
+            ("public health", "apostrophe errors and inconsistent verb tense"),
         ]
-        passages = []
+        passage_set = []
         for field, flaw_focus in specs:
-            passages.append(self.generate_passage(self.model_a, field=field, flaw_focus=flaw_focus))
-        return passages
+            passage = self.generate_passage(self.model_a, field=field, flaw_focus=flaw_focus)
+            passage_set.append((passage, field, flaw_focus))
+        return passage_set
 
 if __name__ == "__main__":
     evaluator = Evaluation()
