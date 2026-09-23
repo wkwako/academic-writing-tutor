@@ -9,8 +9,8 @@ This project uses a typical Django hierarchical structure. The core files includ
 - `Analysis.py` - Performs analysis on files generated from Evaluation.py 
 
 # Key Findings Summary:
-1. Analyzer nodes are the limiting factor in performance: Changing analyzer nodes from using weak models to strong models significantly improves performance, but changing the synthesizer node from a weak model to a strong model sees only minor improvement.
-2. RAG helps at the margins: RAG turns ties into wins, but not losses into wins, suggesting it has a marginal but real impact on performance results.
+1. Analyzer nodes are the limiting factor in performance: Changing analyzer nodes from using weak models to strong models improves performance, but changing the synthesizer node from a weak model to a strong model sees only minor improvement.
+2. RAG shifts outcomes from ties toward decisive results: RAG made judge decisions more decisive but split evenly between wins and losses.
 3. The LangGraph structure has a meaningful impact on performance: The tool outperforms a weak model, even when solely weak models are used in the graph structure. 
 
 # Project Description
@@ -82,7 +82,7 @@ The webapp performs well against the weak model but ties in half the rounds agai
 
 In experiment 1 versus experiment 2, the web app performs slightly better against the weak and strong models when the synthesis node uses the stronger model as compared to the weaker model. Although it still performs worse than the strong model (1 call to a strong model is better than 6 calls to a weak one), the LangGraph architecture appears to be doing real work, as it significantly outperforms the weak model. In experiment 3, we swap out the weak models performing the analysis for strong models, and the web app performs substantially better against both the weak and strong models. And for the first time, it achieves more wins than losses against the strong model. This indicates that calls to each analyzer node -- not the synthesis node -- is the limiting factor in performance.
 
-Last, we use the same models in the analyzers and synthesis node as the previous experiment, but remove RAG functionality. The web app performs well against the weak model again, but less well against the strong model, as half the rounds end in ties. This suggests that RAG contributes enough to turn ties into wins, but not enough to turn losses into wins. LLMs already have access to the information we injected into each prompt, however, our results suggest that directly reminding the LLM of relevant material before asking for feedback may improve results. Therefore, RAG earns its keep in this project, and justifies its inclusion.
+Last, we use the same models in the analyzers and synthesis node as the previous experiment, but remove RAG functionality. The web app performs well against the weak model again, but less well against the strong model, as half the rounds end in ties. This suggests that RAG contributes enough to shift ties toward decisive results. LLMs already have access to the information we injected into each prompt, however, our results suggest that directly reminding the LLM of relevant material before asking for feedback may improve results. Therefore, RAG earns its keep in this project, and justifies its inclusion.
 
 # Limitations
 There are two limitations:
